@@ -5,6 +5,21 @@ from torch.utils.data import Dataset
 
 from feeders import tools
 
+# TODO: install requirements into gcn_venv
+
+"""
+The input data for training or inference are formatted as a NumPy array in five dimensions (N, C, T, V, M):
+
+N: The number of sequences
+
+C: The number of input channels
+
+T: The maximum sequence length in frames
+
+V: The number of joint points
+
+M: The number of persons.
+"""
 
 class Feeder(Dataset):
     def __init__(self, data_path, label_path=None, p_interval=1, split='train', random_choose=False, random_shift=False,

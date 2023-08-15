@@ -1,0 +1,13 @@
+archives/
+all_sqe
+nturgbd_raw
+nturgb+d_skeletons
+nturgb+d_skeletons120
+pretrained_weights
+raw_data
+denoised_data
+gcn_venv
+torchlight
+*.pyc
+work_dir
+*.npz

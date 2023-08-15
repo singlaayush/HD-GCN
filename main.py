@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+# python main.py --config ./config/nturgbd60-cross-subject/joint_com_1.yaml --num-worker 4 --device 0 --batch-size 32 --test-batch-size 32
+
 import argparse
 import inspect
 import os
