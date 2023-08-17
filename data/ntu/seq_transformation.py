@@ -42,23 +42,39 @@ def remove_nan_frames(ske_name, ske_joints, nan_logger):
     return ske_joints[valid_frames]
 
 def seq_translation(skes_joints):
+    """
+        Arguments:
+            skes_joints: (num_skeletons, num_valid_frames for each skeleton, 75)
+                         from denoising: For joints, each frame contains 75 X-Y-Z coordinates (25 joints x 3 coordinates).
+        Returns:
+            skes_joints: (num_skeletons, num_real_frames for each skeleton, 75)
+                         - removes any frames in the front with only (0, 0, 0) X-Y-Z values for all 25 joints
+                         - sets joint-2 (middle of the spine/Spine1 in SMPL) as the new skeleton origin 
+                                - how? by subtracting joint-2 (origin)'s X-Y-Z coordinates from the X-Y-Z coordinates of all 25 joints
+    """
     for idx, ske_joints in enumerate(skes_joints):
         num_frames = ske_joints.shape[0]
-        num_bodies = 1 if ske_joints.shape[1] == 75 else 2
+        num_bodies = 1 if ske_joints.shape[1] == 75 else 2  # always 1 for clinical
+        
+        # ignored for clinical
         if num_bodies == 2:
             missing_frames_1 = np.where(ske_joints[:, :75].sum(axis=1) == 0)[0]
             missing_frames_2 = np.where(ske_joints[:, 75:].sum(axis=1) == 0)[0]
             cnt1 = len(missing_frames_1)
             cnt2 = len(missing_frames_2)
 
-        i = 0  # get the "real" first frame of actor1
+        # get the "real" first frame of actor1
+        #     - this skips past any frames with only (0, 0, 0) values for all 25 joints
+        i = 0
         while i < num_frames:
             if np.any(ske_joints[i, :75] != 0):
                 break
             i += 1
 
+        # joint-2 (middle of the spine/Spine1 in SMPL) is to be set as the new skeleton origin
         origin = np.copy(ske_joints[i, 3:6])  # new origin: joint-2
 
+        # how? by subtracting joint-2 (origin)'s X-Y-Z coordinates from the X-Y-Z coordinates of all 25 joints
         for f in range(num_frames):
             if num_bodies == 1:
                 ske_joints[f] -= np.tile(origin, 25)
@@ -109,7 +125,21 @@ def frame_translation(skes_joints, skes_name, frames_cnt):
 def align_frames(skes_joints, frames_cnt):
     """
     Align all sequences with the same frame length.
-
+    
+   
+    Arguments:
+        skes_joints: (num_skeletons, num_real_frames for each skeleton, 75)
+                     has been processed first by seq_transformation to set joint-2
+                     i.e. (middle of the spine/Spine1 in SMPL) as the new skeleton origin 
+        
+        frames_cnt: list containing counts of valid frames for all skeletons in order
+    Returns:
+        aligned_skes_joints: (num_skeletons, max_num_frames, 150)
+                     - all skeleton sequences aligned to max_num_frames from all of the sequences
+                     - padded to 150 joint X-Y-Z coordinates since ntu dataset can have 2 bodies 
+                            - each body has 75 joint coordinates (25 x 3)
+                            - single body skeleton sequences are stacked with 75 all zero joint
+                               coords to make 150 joint coordinates  
     """
     num_skes = len(skes_joints)
     max_num_frames = frames_cnt.max()  # 300

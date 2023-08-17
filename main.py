@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-# python main.py --config ./config/nturgbd60-cross-subject/joint_com_1.yaml --num-worker 4 --device 0 --batch-size 32 --test-batch-size 32
+# python main.py --config ./config/clinical_joint_com_1.yaml --device 0
 
 import argparse
 import inspect

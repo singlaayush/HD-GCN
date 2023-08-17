@@ -1,0 +1,46 @@
+num_worker: 4  # modified for current gcp vm
+work_dir: ./work_dir/clinical_hdgcn/joint_CoM_1_debug/
+
+# feeder
+feeder: feeders.feeder_clinical.Feeder
+train_feeder_args:
+  data_path: ./data/clinical/clinical.npz
+  split: train
+  debug: False
+  random_choose: False
+  random_shift: False
+  random_move: False
+  window_size: 64  # what does window size mean?
+  normalization: False  # acc to paper normalization=True has no effect on results
+  random_rot: True
+  p_interval: [0.5, 1]  # what is p_interval doing here?
+
+test_feeder_args:
+  data_path: ./data/clinical/clinical.npz
+  split: test
+  window_size: 64
+  p_interval: [0.95]
+  debug: False
+
+# model
+model: model.HDGCN.Model
+model_args:
+  num_class: 2 
+  num_point: 25
+  num_person: 1
+  graph: graph.ntu_rgb_d_hierarchy.Graph
+  graph_args:
+    labeling_mode: 'spatial'
+    CoM: 1  # what does center of mass mean here? Paper must have an explanation
+
+#optim
+weight_decay: 0.0004
+base_lr: 0.1
+warm_up_epoch: 5
+
+# training
+device: [0]
+batch_size: 32  # modified for current gcp vm
+test_batch_size: 32  # modified for current gcp vm
+num_epoch: 25
+nesterov: True

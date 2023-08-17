@@ -12,7 +12,7 @@ N: The number of sequences  # N = 164
 
 C: The number of input channels  # 3
 
-T: The maximum sequence length in frames  # variable lengths expected
+T: The maximum sequence length in frames  # 1148
 
 V: The number of joint points  # should be 25
 
@@ -24,7 +24,7 @@ class Feeder(Dataset):
                  random_move=False, random_rot=False, window_size=-1, normalization=False, debug=False, use_mmap=False,
                  bone=False):
         """
-        :param data_path: where the data is stored e.g. ./data/ntu/NTU60_CS.npz
+        :param data_path: where the data is stored e.g. ./data/clinical/clinical.npz
         :param label_path: 
         :param split: training set or test set
         :param random_choose: If true, randomly choose a portion of the input sequence
@@ -35,9 +35,7 @@ class Feeder(Dataset):
         :param normalization: If true, normalize input sequence
         :param debug: If true, only use the first 100 samples
         :param use_mmap: If true, use mmap mode to load data, which can save the running memory
-        :param bone: use bone modality or not
-        :param vel: use motion modality or not
-        :param only_label: only load label for ensemble score compute
+        :param bone: use bone modality or not [UNSUPPORTED]
         """
 
         self.debug = debug
@@ -52,7 +50,6 @@ class Feeder(Dataset):
         self.use_mmap = use_mmap
         self.p_interval = p_interval
         self.random_rot = random_rot
-        self.bone = bone
         self.load_data()
         if normalization:
             self.get_mean_map()
@@ -71,7 +68,7 @@ class Feeder(Dataset):
         else:
             raise NotImplementedError('data split only supports train/test')
         N, T, _ = self.data.shape
-        self.data = self.data.reshape((N, T, 2, 25, 3)).transpose(0, 4, 1, 3, 2)
+        self.data = self.data.reshape((N, T, 1, 25, 3)).transpose(0, 4, 1, 3, 2)
 
     def get_mean_map(self):
         data = self.data
@@ -94,12 +91,6 @@ class Feeder(Dataset):
         data_numpy = tools.valid_crop_resize(data_numpy, valid_frame_num, self.p_interval, self.window_size)
         if self.random_rot:
             data_numpy = tools.random_rot(data_numpy)
-        if self.bone:
-            from .bone_pairs import ntu_pairs
-            bone_data_numpy = np.zeros_like(data_numpy) # 3, T, V
-            for v1, v2 in ntu_pairs:
-                bone_data_numpy[:, :, v1 - 1] = data_numpy[:, :, v1 - 1] - data_numpy[:, :, v2 - 1]
-            data_numpy = bone_data_numpy
         return data_numpy, label, index
 
     def top_k(self, score, top_k):

@@ -11,3 +11,5 @@ torchlight
 *.pyc
 work_dir
 *.npz
+data/clinical/all_joints_ntu_w_lbl.pkl
+*tfevents*
