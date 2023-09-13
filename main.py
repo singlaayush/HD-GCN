@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-# python main.py --config ./config/clinical_joint_com_1.yaml --device 0
+# python main.py --config ./config/clinical/joint_com_1_weighted_random_sampler_nesterov.yaml --device 0
+# python main.py --config ./config/clinical/joint_com_1_weighted_random_sampler_adam.yaml --device 0
 
 import argparse
 import inspect
@@ -11,6 +12,7 @@ import random
 import shutil
 import sys
 import time
+import joblib
 from collections import OrderedDict
 import traceback
 from sklearn.metrics import confusion_matrix
@@ -274,12 +276,16 @@ class Processor():
         Feeder = import_class(self.arg.feeder)
         self.data_loader = dict()
         if self.arg.phase == 'train':
+            # TODO COMPLETE: add imbalanced sampler
+            sampler_weights = joblib.load("./data/clinical/weighted_random_sampler_weights.pkl")
+            weighted_random_sampler = torch.utils.data.WeightedRandomSampler(
+                weights=sampler_weights, num_samples=len(sampler_weights), replacement=True
+            )
             self.data_loader['train'] = torch.utils.data.DataLoader(
                 dataset=Feeder(**self.arg.train_feeder_args),
                 batch_size=self.arg.batch_size,
-                shuffle=True,
+                sampler=weighted_random_sampler,
                 num_workers=self.arg.num_worker,
-                drop_last=True,
                 worker_init_fn=init_seed)
         self.data_loader['test'] = torch.utils.data.DataLoader(
             dataset=Feeder(**self.arg.test_feeder_args),
@@ -296,6 +302,8 @@ class Processor():
         shutil.copy2(inspect.getfile(Model), self.arg.work_dir)
         print(Model)
         self.model = Model(**self.arg.model_args)
+        
+        # TODO: change loss type (if required)
         if self.arg.loss_type == 'CE':
             self.loss = nn.CrossEntropyLoss().cuda(output_device)
         else:
@@ -333,6 +341,7 @@ class Processor():
                 self.model.load_state_dict(state)
 
     def load_optimizer(self):
+        # TODO: determine which optimizer to use
         if self.arg.optimizer == 'SGD':
             self.optimizer = optim.SGD(
                 self.model.parameters(),

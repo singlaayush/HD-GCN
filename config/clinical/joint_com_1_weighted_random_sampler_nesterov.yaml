@@ -1,5 +1,5 @@
 num_worker: 4  # modified for current gcp vm
-work_dir: ./work_dir/clinical_hdgcn/joint_CoM_1_debug/
+work_dir: ./work_dir/clinical_hdgcn/joint_CoM_1_weighted_random_sampler_nesterov/
 
 # feeder
 feeder: feeders.feeder_clinical.Feeder
@@ -40,7 +40,7 @@ warm_up_epoch: 5
 
 # training
 device: [0]
-batch_size: 32  # modified for current gcp vm
-test_batch_size: 32  # modified for current gcp vm
-num_epoch: 25
+batch_size: 64  # modified for current gcp vm
+test_batch_size: 64  # modified for current gcp vm
+num_epoch: 90
 nesterov: True
